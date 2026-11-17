@@ -2,6 +2,7 @@ from extract_transcipt import extract_transcript
 from embeddings import create_embedding
 from vector_store import create_vectore_store
 from llm import create_llm
+from rag_chain import create_rag_chain
 
 youtube_url = input("Enter Youtube URL")
 
@@ -26,35 +27,16 @@ retriever = vector_store.as_retriever(
     search_kwargs={"k":3}
 )
 
-result = retriever.invoke(
-    "what is this video about ?"
-)
-
-
-context = "\n\n".join(
-    doc.page_content for doc in result
-)
-
 llm = create_llm()
 
-question = input("Ask your question: ")
+rag_chain = create_rag_chain(retriever, llm)
 
-prompt = f"""
-You are a helpful assistant.
+while True:
+    question = input("\nAsk Your Qurstion (type exit to stop)")
 
-Answer the question using only the given context.
-If the answer is not available in the context, say:
-"I could not find this information in the video."
+    if question.lower() == "exit":
+        break
 
-Context:
-{context}
-
-Question:
-{question}
-"""
-
-response = llm.invoke(prompt)
-
-
-print("\nFinal Answer:")
-print(response.content)
+    response = rag_chain.invoke(question)
+    print("\nFinal Answer:")
+    print(response)
